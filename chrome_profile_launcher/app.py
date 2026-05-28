@@ -321,7 +321,11 @@ class ProfileLauncherApp(ctk.CTk):
 
         # ─── Log console ───
         self.log_console = LogConsole(self, height=110, corner_radius=8)
-        self.log_console.grid(row=8, column=0, padx=20, pady=(2, 14), sticky="ew")
+        self.log_console.grid(row=8, column=0, padx=20, pady=(2, 2), sticky="ew")
+
+        credit = ctk.CTkLabel(self, text="Developed by ImranDev3  |  github.com/ImranDev3",
+                               font=ctk.CTkFont(size=11), text_color="#888888")
+        credit.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
 
     # ─── PROFILE ROWS ────────────────────────────────────────
 

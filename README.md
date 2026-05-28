@@ -55,3 +55,7 @@ ChromeMultiBot/
 | **Persistent Sessions** | Profiles stored at `~/.chromemultibot/chrome_data/Profile_N/` |
 
 Configuration auto-saves to `~/.chromemultibot/config.json`.
+
+---
+
+**Developed by [ImranDev3](https://github.com/ImranDev3)**
