@@ -6,17 +6,12 @@ for pkg in ["customtkinter"]:
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
-from chrome_profile_launcher.app import ActivationWindow, Dashboard
+from chrome_profile_launcher.app import Dashboard
 
 
 def main():
-    win = ActivationWindow()
-    ok = win.run()
-    if ok:
-        app = Dashboard(licensed=True)
-        app.mainloop()
-    else:
-        sys.exit(0)
+    app = Dashboard()
+    app.mainloop()
 
 
 if __name__ == "__main__":

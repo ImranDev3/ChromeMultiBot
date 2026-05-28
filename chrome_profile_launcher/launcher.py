@@ -2,29 +2,69 @@ import subprocess
 import random
 import time
 import math
+import json
 import ctypes
 import ctypes.wintypes
 from pathlib import Path
-from typing import List, Callable, Optional
+from typing import List, Callable
 
 CHROME_EXE = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+_REAL_USER_DATA = Path.home() / "AppData" / "Local" / "Google" / "Chrome" / "User Data"
 
 _WEnumProc = ctypes.WINFUNCTYPE(ctypes.wintypes.BOOL, ctypes.wintypes.HWND, ctypes.wintypes.LPARAM)
 user32 = ctypes.windll.user32
 
 
-def _profile_dir(idx: int) -> str:
-    return "Default" if idx == 1 else f"Profile {idx - 1}"
+def get_chrome_user_data_dir() -> Path:
+    return _REAL_USER_DATA if _REAL_USER_DATA.exists() else (Path.home() / ".chromemultibot" / "chrome_data")
 
 
-def launch_single(profile_idx: int, urls: List[str], user_data_dir: Path,
+def detect_profiles() -> list[dict]:
+    """
+    Detect existing Chrome profiles from the real User Data directory.
+    Returns a list of dicts: {id, dir, name}
+    The first profile (Default) is always included.
+    """
+    profiles = []
+    ud = get_chrome_user_data_dir()
+
+    if not ud.exists():
+        return [{"id": 1, "dir": "Default", "name": "Default"}]
+
+    try:
+        local_state = ud / "Local State"
+        if local_state.exists():
+            data = json.loads(local_state.read_text(encoding="utf-8"))
+            info = data.get("profile", {}).get("info_cache", {})
+            for prof_dir, meta in info.items():
+                if prof_dir == "Default":
+                    profiles.append({"id": 1, "dir": "Default", "name": meta.get("name", "Default")})
+                elif prof_dir.startswith("Profile "):
+                    num = int(prof_dir.split()[-1]) + 1
+                    profiles.append({"id": num, "dir": prof_dir, "name": meta.get("name", prof_dir)})
+
+    except Exception:
+        pass
+
+    if not profiles:
+        profiles.append({"id": 1, "dir": "Default", "name": "Default"})
+        for i in range(1, 12):
+            pdir = f"Profile {i}"
+            if (ud / pdir).exists():
+                profiles.append({"id": i + 1, "dir": pdir, "name": pdir})
+
+    profiles.sort(key=lambda p: p["id"])
+    return profiles
+
+
+def launch_single(profile_dir: str, urls: List[str], user_data_dir: Path,
                   proxy: str = "", mute: bool = False) -> bool:
     if not urls:
         return False
     try:
         cmd = [CHROME_EXE]
         cmd.append(f'--user-data-dir={user_data_dir}')
-        cmd.append(f'--profile-directory="{_profile_dir(profile_idx)}"')
+        cmd.append(f'--profile-directory="{profile_dir}"')
         cmd.append("--no-first-run")
         cmd.append("--disable-search-engine-choice-screen")
 
@@ -47,22 +87,22 @@ def launch_single(profile_idx: int, urls: List[str], user_data_dir: Path,
 
 def launch_all(profiles: List[tuple], urls: List[str], user_data_dir: Path,
                human_like: bool = False, delay_min: int = 2, delay_max: int = 5,
-               progress_cb: Callable = None, log_cb: Callable = None) -> List[int]:
+               progress_cb: Callable = None, log_cb: Callable = None) -> List[str]:
     total = len(profiles)
     launched = []
     user_data_dir.mkdir(parents=True, exist_ok=True)
 
-    for idx, (profile_idx, proxy, mute) in enumerate(profiles):
+    for idx, (prof_dir, proxy, mute, name) in enumerate(profiles):
         if log_cb:
-            log_cb(f"Launching Profile {profile_idx}...", "info")
-        ok = launch_single(profile_idx, urls, user_data_dir, proxy, mute)
+            log_cb(f"Launching {name}...", "info")
+        ok = launch_single(prof_dir, urls, user_data_dir, proxy, mute)
         if ok:
-            launched.append(profile_idx)
+            launched.append(prof_dir)
             if log_cb:
-                log_cb(f"Profile {profile_idx} opened with {len(urls)} tab(s)", "success")
+                log_cb(f"{name} opened with {len(urls)} tab(s)", "success")
         else:
             if log_cb:
-                log_cb(f"Profile {profile_idx} failed to launch", "error")
+                log_cb(f"{name} failed to launch", "error")
 
         if progress_cb:
             progress_cb((idx + 1) / total)
@@ -74,7 +114,7 @@ def launch_all(profiles: List[tuple], urls: List[str], user_data_dir: Path,
             time.sleep(delay)
 
     if log_cb:
-        log_cb(f"Done — {len(launched)}/{total} profile(s) launched", "success")
+        log_cb(f"Done \u2014 {len(launched)}/{total} profile(s) launched", "success")
     return launched
 
 
