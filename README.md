@@ -1,31 +1,57 @@
 # ChromeMultiBot 🚀
 
-A professional Python desktop automation tool to launch multiple Chrome profiles with predefined URLs simultaneously.
+Professional Python desktop tool to launch multiple Chrome profiles with persistent sessions, proxy support, anti-bot delays, and window tiling.
 
 ## Features
 
-- **12 Chrome Profile Management** — Checkbox UI to select/deselect profiles
-- **5 URL Inputs** — Pre-filled with Google, Facebook, Gmail, YouTube, GitHub
-- **One-Click Launch** — Opens selected profiles with all URLs as separate tabs
-- **Force Close** — Kills all Chrome processes instantly
-- **Dark Modern UI** — Built with CustomTkinter
+- **12 Profile Manager** — Checkbox UI with Select All / Deselect All
+- **Persistent Login** — Each profile uses its own `--user-data-dir` so logins persist
+- **Proxy Integration** — Per-profile proxy with auto-auth via Chrome extension
+- **Human-Like Launch** — Random 2-5s delays between profile launches
+- **Window Tiling** — Auto-arrange Chrome windows in a grid
+- **Profile Search & Tags** — Search by name/tag, color-coded tags (Trading, Social, Work...)
+- **Log Console** — Real-time launch log with timestamps
+- **Progress Bar** — Visual launch progress indicator
+- **5 URL Inputs** — Pre-filled defaults, open all as tabs in each profile
+
+## Quick Start
+
+```bash
+python run.py
+```
+
+Auto-installs `customtkinter` on first run.
+
+## Project Structure
+
+```
+ChromeMultiBot/
+├── run.py                              # Entry point
+├── chrome_profile_launcher/
+│   ├── __init__.py
+│   ├── app.py                          # CustomTkinter UI
+│   ├── config.py                       # JSON config persistence
+│   └── launcher.py                     # Chrome launch, proxy ext, tiling
+└── README.md
+```
 
 ## Requirements
 
 - Windows OS
-- Google Chrome installed at `C:\Program Files\Google\Chrome\Application\chrome.exe`
+- Google Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`
 - Python 3.7+
 
-## Installation
+## Details
 
-```bash
-pip install customtkinter
-```
+| Feature | Description |
+|---|---|
+| **Select All / Deselect All** | Buttons at the top of the profile list |
+| **Search** | Filter profiles by name or tag |
+| **Tags** | Color-coded labels, click "+" to add custom tags |
+| **Proxy** | Click ⚙ on a profile, enable proxy, set IP:Port:User:Pass |
+| **Human-Like Launch** | Toggle in settings, configurable delay range |
+| **Tile Windows** | Arranges new Chrome windows in a grid after launch |
+| **Force Close** | `taskkill /F /IM chrome.exe` — kills all Chrome processes |
+| **Persistent Sessions** | Profiles stored at `~/.chromemultibot/chrome_data/Profile_N/` |
 
-## Usage
-
-```bash
-python chrome_profile_launcher.py
-```
-
-The app auto-installs `customtkinter` if missing. Select profiles, enter URLs, and click launch.
+Configuration auto-saves to `~/.chromemultibot/config.json`.
