@@ -1,6 +1,5 @@
 import threading
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import customtkinter as ctk
@@ -14,6 +13,7 @@ from .launcher import (
     launch_all, force_close, tile_chrome_windows,
     get_current_chrome_windows
 )
+from .license import LicenseManager, TRIAL_MAX_PROFILES
 
 TAG_COLORS = {
     "Trading": "#FF6B35",
@@ -24,7 +24,6 @@ TAG_COLORS = {
     "Entertainment": "#9D4EDD",
     "default": "#6C757D",
 }
-PROFILE_NAMES = [f"Profile {i}" for i in range(1, 13)]
 
 
 def _tag_color(tag: str) -> str:
@@ -33,12 +32,11 @@ def _tag_color(tag: str) -> str:
 
 class ProfileRow(ctk.CTkFrame):
     def __init__(self, parent, index: int, config: ProfileConfig,
-                 on_toggle_advanced=None, on_tag_click=None, **kwargs):
+                 disabled: bool = False, **kwargs):
         super().__init__(parent, corner_radius=8, **kwargs)
         self.index = index
         self.config = config
-        self.on_toggle_advanced = on_toggle_advanced
-        self.on_tag_click = on_tag_click
+        self.disabled = disabled
         self._advanced_shown = False
         self._advanced_frame: Optional[ctk.CTkFrame] = None
         self._build()
@@ -48,16 +46,22 @@ class ProfileRow(ctk.CTkFrame):
 
         self.check_var = ctk.BooleanVar(value=self.config.enabled)
         self.checkbox = ctk.CTkCheckBox(self, text="", variable=self.check_var,
-                                         width=20, corner_radius=4)
+                                         width=20, corner_radius=4,
+                                         state="disabled" if self.disabled else "normal")
         self.checkbox.grid(row=0, column=0, padx=(8, 4), pady=6, sticky="w")
 
         self.name_label = ctk.CTkLabel(self, text=f"Profile {self.index}",
                                         font=ctk.CTkFont(size=13, weight="bold"))
         self.name_label.grid(row=0, column=1, padx=(0, 6), pady=6, sticky="w")
 
-        self.tag_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.tag_frame.grid(row=0, column=2, padx=4, pady=6, sticky="w")
-        self._render_tags()
+        if self.disabled:
+            lock_lbl = ctk.CTkLabel(self, text="\U0001f512 TRIAL LOCKED", text_color="#FF9800",
+                                     font=ctk.CTkFont(size=10))
+            lock_lbl.grid(row=0, column=2, padx=4, pady=6, sticky="w")
+        else:
+            self.tag_frame = ctk.CTkFrame(self, fg_color="transparent")
+            self.tag_frame.grid(row=0, column=2, padx=4, pady=6, sticky="w")
+            self._render_tags()
 
         self.advanced_btn = ctk.CTkButton(self, text="\u2699\ufe0f", width=30, height=24,
                                            corner_radius=6, font=ctk.CTkFont(size=14),
@@ -143,7 +147,7 @@ class ProfileRow(ctk.CTkFrame):
                                               width=100, corner_radius=6,
                                               show="*")
         self.proxy_pass_entry.insert(0, self.config.proxy.password)
-        self.proxy_pass_entry.grid(row=1, column=3, padx=2, pady=4, sticky="w")
+        self.proxy_pass_entry.grid(row=1, column=3, padx=2, pady=4, sticky="ew")
 
     def save_state(self):
         self.config.enabled = self.check_var.get()
@@ -172,13 +176,87 @@ class LogConsole(ctk.CTkTextbox):
         self.configure(state="disabled")
 
 
+class LicenseDialog(ctk.CTkToplevel):
+    def __init__(self, parent, license_mgr: LicenseManager):
+        super().__init__(parent)
+        self.license_mgr = license_mgr
+        self.result = False
+        self.title("Activate License")
+        self.geometry("460x320")
+        self.resizable(False, False)
+
+        self.after(100, self._center)
+
+        frame = ctk.CTkFrame(self, corner_radius=12)
+        frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        ctk.CTkLabel(frame, text="ChromeMultiBot Activation",
+                      font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(16, 4))
+
+        ctk.CTkLabel(frame, text="Free Trial: 3 profiles only.\nEnter a license key to unlock all 12 profiles + Proxy.",
+                      font=ctk.CTkFont(size=12), text_color="#AAAAAA").pack(pady=(0, 12))
+
+        ctk.CTkLabel(frame, text="Owner Name / Email", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=20)
+        self.owner_entry = ctk.CTkEntry(frame, placeholder_text="e.g. John Doe", corner_radius=8)
+        self.owner_entry.pack(fill="x", padx=20, pady=(2, 8))
+
+        ctk.CTkLabel(frame, text="License Key", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=20)
+        self.key_entry = ctk.CTkEntry(frame, placeholder_text="CHMB-XXXXXXXX-XXXXXXXX-XXXXXXXX",
+                                       corner_radius=8)
+        self.key_entry.pack(fill="x", padx=20, pady=(2, 12))
+
+        btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20)
+
+        ctk.CTkButton(btn_frame, text="Activate", fg_color="#2B7A4B",
+                       hover_color="#1F5C38", corner_radius=8,
+                       command=self._activate).pack(side="left", fill="x", expand=True, padx=(0, 4))
+
+        ctk.CTkButton(btn_frame, text="Continue Trial", fg_color="#3A3A5C",
+                       hover_color="#2A2A4C", corner_radius=8,
+                       command=self._trial).pack(side="left", fill="x", expand=True, padx=(4, 0))
+
+        ctk.CTkLabel(frame, text="Contact ImranDev3 to get a license key",
+                      font=ctk.CTkFont(size=10), text_color="#666666").pack(pady=(12, 4))
+
+    def _center(self):
+        self.update_idletasks()
+        pw = self.master.winfo_width()
+        ph = self.master.winfo_height()
+        px = self.master.winfo_x()
+        py = self.master.winfo_y()
+        w = self.winfo_width()
+        h = self.winfo_height()
+        x = px + (pw - w) // 2
+        y = py + (ph - h) // 2
+        self.geometry(f"+{x}+{y}")
+
+    def _activate(self):
+        owner = self.owner_entry.get().strip()
+        key = self.key_entry.get().strip()
+        if not owner or not key:
+            messagebox.showwarning("Missing Info", "Please enter both owner name and license key.")
+            return
+        if self.license_mgr.activate(key, owner):
+            messagebox.showinfo("Success", "License activated! All features unlocked.")
+            self.result = True
+            self.destroy()
+        else:
+            messagebox.showerror("Invalid Key", "The license key is invalid for this owner.")
+
+    def _trial(self):
+        self.result = False
+        self.destroy()
+
+
 class ProfileLauncherApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Chrome Profile Launcher")
-        self.geometry("800x820")
+        self.geometry("800x840")
         self.resizable(False, False)
 
+        self.license_mgr = LicenseManager()
         self.config: AppConfig = load_config()
         self.profile_rows: list[ProfileRow] = []
         self._before_windows = []
@@ -187,6 +265,26 @@ class ProfileLauncherApp(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self._build_ui()
         self._repopulate_rows()
+        self._check_license()
+
+    def _check_license(self):
+        if not self.license_mgr.is_activated:
+            self.after(200, self._show_license_dialog)
+
+    def _show_license_dialog(self):
+        dialog = LicenseDialog(self, self.license_mgr)
+        self.wait_window(dialog)
+        self._update_license_badge()
+        self._repopulate_rows()
+
+    def _update_license_badge(self):
+        if self.license_mgr.is_activated:
+            text = f"\U0001f513 Licensed — {self.license_mgr.owner}"
+            color = "#2EC4B6"
+        else:
+            text = f"\U0001f512 Trial ({TRIAL_MAX_PROFILES}/12 profiles)"
+            color = "#FF9800"
+        self.license_badge.configure(text=text, text_color=color)
 
     # ─── UI BUILD ────────────────────────────────────────────
 
@@ -194,10 +292,17 @@ class ProfileLauncherApp(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(3, weight=1)
 
-        # Title
-        title = ctk.CTkLabel(self, text="Chrome Profile Launcher",
-                              font=ctk.CTkFont(size=24, weight="bold"))
-        title.grid(row=0, column=0, pady=(16, 4), padx=20, sticky="n")
+        title_frame = ctk.CTkFrame(self, fg_color="transparent")
+        title_frame.grid(row=0, column=0, pady=(16, 4), padx=20, sticky="ew")
+        title_frame.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(title_frame, text="Chrome Profile Launcher",
+                      font=ctk.CTkFont(size=24, weight="bold")).grid(
+            row=0, column=0, sticky="w")
+
+        self.license_badge = ctk.CTkLabel(title_frame, text="",
+                                           font=ctk.CTkFont(size=11, weight="bold"))
+        self.license_badge.grid(row=1, column=0, sticky="w")
 
         # ─── Search + Tags ───
         top_bar = ctk.CTkFrame(self, corner_radius=10)
@@ -217,9 +322,6 @@ class ProfileLauncherApp(ctk.CTk):
         tag_lbl.grid(row=0, column=2, padx=(8, 2), pady=8, sticky="w")
 
         self.tag_filter_var = ctk.StringVar(value="All")
-
-        def tag_filter_changed(*_):
-            self._filter_rows()
 
         tag_menu = ctk.CTkOptionMenu(top_bar, values=["All"] + self.config.tags_pool,
                                       variable=self.tag_filter_var, width=100,
@@ -276,17 +378,15 @@ class ProfileLauncherApp(ctk.CTk):
             row=0, column=1, padx=(4, 2), pady=10, sticky="w")
 
         self.delay_min_var = ctk.StringVar(value=str(self.config.delay_min))
-        delay_min_entry = ctk.CTkEntry(settings_frame, textvariable=self.delay_min_var,
-                                        width=40, corner_radius=6)
-        delay_min_entry.grid(row=0, column=2, padx=2, pady=10, sticky="w")
+        ctk.CTkEntry(settings_frame, textvariable=self.delay_min_var,
+                      width=40, corner_radius=6).grid(row=0, column=2, padx=2, pady=10, sticky="w")
 
         ctk.CTkLabel(settings_frame, text="-", font=ctk.CTkFont(size=14)).grid(
             row=0, column=3, padx=0, pady=10, sticky="w")
 
         self.delay_max_var = ctk.StringVar(value=str(self.config.delay_max))
-        delay_max_entry = ctk.CTkEntry(settings_frame, textvariable=self.delay_max_var,
-                                        width=40, corner_radius=6)
-        delay_max_entry.grid(row=0, column=4, padx=2, pady=10, sticky="w")
+        ctk.CTkEntry(settings_frame, textvariable=self.delay_max_var,
+                      width=40, corner_radius=6).grid(row=0, column=4, padx=2, pady=10, sticky="w")
 
         ctk.CTkLabel(settings_frame, text="sec", font=ctk.CTkFont(size=12)).grid(
             row=0, column=5, padx=(0, 10), pady=10, sticky="w")
@@ -294,25 +394,31 @@ class ProfileLauncherApp(ctk.CTk):
         # ─── Action buttons ───
         action_frame = ctk.CTkFrame(self, fg_color="transparent")
         action_frame.grid(row=6, column=0, padx=20, pady=(0, 4), sticky="ew")
-        action_frame.grid_columnconfigure((0, 1, 2), weight=1)
+        action_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
 
         ctk.CTkButton(action_frame, text="\U0001f680 Launch", fg_color="#2B7A4B",
                        hover_color="#1F5C38", height=40, corner_radius=10,
                        font=ctk.CTkFont(size=13, weight="bold"),
                        command=self._launch_profiles).grid(
-            row=0, column=0, padx=(0, 4), sticky="ew")
+            row=0, column=0, padx=(0, 3), sticky="ew")
 
         ctk.CTkButton(action_frame, text="\U0001f6d1 Force Close", fg_color="#B32424",
                        hover_color="#8A1B1B", height=40, corner_radius=10,
                        font=ctk.CTkFont(size=13, weight="bold"),
                        command=self._force_close).grid(
-            row=0, column=1, padx=4, sticky="ew")
+            row=0, column=1, padx=3, sticky="ew")
 
-        ctk.CTkButton(action_frame, text="\U0001f9f0 Tile Windows", fg_color="#3A3A5C",
+        ctk.CTkButton(action_frame, text="\U0001f9f0 Tile", fg_color="#3A3A5C",
                        hover_color="#2A2A4C", height=40, corner_radius=10,
                        font=ctk.CTkFont(size=13, weight="bold"),
                        command=self._tile_windows).grid(
-            row=0, column=2, padx=(4, 0), sticky="ew")
+            row=0, column=2, padx=3, sticky="ew")
+
+        ctk.CTkButton(action_frame, text="\U0001f511 License", fg_color="#7B4B2A",
+                       hover_color="#5C3A1F", height=40, corner_radius=10,
+                       font=ctk.CTkFont(size=13, weight="bold"),
+                       command=self._show_license_dialog).grid(
+            row=0, column=3, padx=(3, 0), sticky="ew")
 
         # ─── Progress ───
         self.progress_bar = ctk.CTkProgressBar(self, corner_radius=6)
@@ -320,12 +426,12 @@ class ProfileLauncherApp(ctk.CTk):
         self.progress_bar.set(0)
 
         # ─── Log console ───
-        self.log_console = LogConsole(self, height=110, corner_radius=8)
+        self.log_console = LogConsole(self, height=100, corner_radius=8)
         self.log_console.grid(row=8, column=0, padx=20, pady=(2, 2), sticky="ew")
 
         credit = ctk.CTkLabel(self, text="Developed by ImranDev3  |  github.com/ImranDev3",
                                font=ctk.CTkFont(size=11), text_color="#888888")
-        credit.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
+        credit.grid(row=9, column=0, padx=20, pady=(0, 8), sticky="s")
 
     # ─── PROFILE ROWS ────────────────────────────────────────
 
@@ -333,6 +439,8 @@ class ProfileLauncherApp(ctk.CTk):
         for row in self.profile_rows:
             row.destroy()
         self.profile_rows.clear()
+
+        max_p = self.license_mgr.max_profiles
 
         for i in range(12):
             name = f"Profile {i + 1}"
@@ -344,9 +452,13 @@ class ProfileLauncherApp(ctk.CTk):
                 if filter_tag not in self.config.profiles[i].tags:
                     continue
 
-            row = ProfileRow(self.profiles_container, i + 1, self.config.profiles[i])
+            locked = i >= max_p
+            row = ProfileRow(self.profiles_container, i + 1, self.config.profiles[i],
+                              disabled=locked)
             row.pack(fill="x", padx=4, pady=2)
             self.profile_rows.append(row)
+
+        self._update_license_badge()
 
     def _filter_rows(self):
         text = self.search_var.get().strip()
@@ -355,11 +467,13 @@ class ProfileLauncherApp(ctk.CTk):
 
     def _select_all(self):
         for row in self.profile_rows:
-            row.check_var.set(True)
+            if not row.disabled:
+                row.check_var.set(True)
 
     def _deselect_all(self):
         for row in self.profile_rows:
-            row.check_var.set(False)
+            if not row.disabled:
+                row.check_var.set(False)
 
     # ─── ACTIONS ─────────────────────────────────────────────
 
@@ -370,7 +484,7 @@ class ProfileLauncherApp(ctk.CTk):
         result = []
         for row in self.profile_rows:
             row.save_state()
-            if row.config.enabled:
+            if row.config.enabled and not row.disabled:
                 result.append((row.index, row.config))
         return result
 

@@ -13,6 +13,14 @@ Professional Python desktop tool to launch multiple Chrome profiles with persist
 - **Log Console** — Real-time launch log with timestamps
 - **Progress Bar** — Visual launch progress indicator
 - **5 URL Inputs** — Pre-filled defaults, open all as tabs in each profile
+- **License System** — Free trial (3 profiles) or full unlock with license key
+
+## License System
+
+- **Free Trial**: Use up to 3 profiles with all basic features
+- **Full License**: Unlock all 12 profiles + Proxy integration
+- Contact **ImranDev3** to get a license key
+- Enter the key via the License button in the app
 
 ## Quick Start
 
@@ -27,11 +35,13 @@ Auto-installs `customtkinter` on first run.
 ```
 ChromeMultiBot/
 ├── run.py                              # Entry point
+├── keygen.py                           # License key generator (dev only, not in repo)
 ├── chrome_profile_launcher/
 │   ├── __init__.py
 │   ├── app.py                          # CustomTkinter UI
 │   ├── config.py                       # JSON config persistence
-│   └── launcher.py                     # Chrome launch, proxy ext, tiling
+│   ├── launcher.py                     # Chrome launch, proxy ext, tiling
+│   └── license.py                      # License verification + trial limits
 └── README.md
 ```
 
