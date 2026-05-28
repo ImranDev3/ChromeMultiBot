@@ -4,38 +4,35 @@ Professional-grade Chrome multi-profile automation tool with KeyAuth licensing, 
 
 ## ✨ Features
 
-- **12+ Dynamic Profiles** — Checkbox UI with unlimited dynamic profile addition at runtime
-- **KeyAuth Licensing** — Secure license key validation via KeyAuth API
-- **Persistent Sessions** — Each profile uses its own `--user-data-dir` so Facebook, Gmail, etc. stay logged in
-- **Per-Profile Proxy** — IP:Port:User:Pass with auto-auth Chrome extension generation
-- **Custom User-Agent** — Assign a unique User-Agent per profile
-- **Mute Audio** — Toggle `--mute-audio` flag per profile
-- **Custom Extension Loading** — `--load-extension` per profile
-- **Anti-Bot Delay** — Random 2-5 second delays between profile launches
+- **12+ Dynamic Profiles** — Checkbox UI with unlimited dynamic profile addition
+- **Free Trial** — Use 3 profiles immediately, no license key required
+- **KeyAuth Licensing** — Unlock all 12 profiles + advanced features
+- **Persistent Sessions** — Each profile uses its own `--user-data-dir` for auto-login
+- **Per-Profile Proxy** — IP:Port:User:Pass with auto-auth Chrome extension
+- **Custom User-Agent** — Assign unique User-Agent per profile
+- **Mute Audio** — Per-profile `--mute-audio` toggle
+- **Extension Loading** — `--load-extension` per profile
+- **Anti-Bot Delay** — Random 2-5s delays between profile launches
 - **Window Tiling** — Auto-arrange Chrome windows in a grid
-- **Profile Search & Tags** — Filter profiles by name or color-coded tags (Trading, Social, Work...)
-- **Live Log Console** — Real-time launch log with timestamps and status emojis
-- **Progress Bar** — Visual launch progress
+- **Profile Search & Tags** — Filter by name or color-coded tags
+- **Live Log Console** — Real-time launch log with timestamps
 - **Force Kill** — One-click `taskkill /F /IM chrome.exe`
 
-## 🖥️ Screens
+## 🆓 Free vs Licensed
 
-### Login Window
-Dark-themed license activation with:
-- License key entry field
-- "Remember License Key" (encrypted local storage)
-- KeyAuth API validation
-- Clean error messaging
-
-### Dashboard (Chrome Commander Pro)
-Full-featured control panel with:
-- Search bar + tag filter dropdown
-- Scrollable profile list with expandable Advanced Settings
-- "+ Add Profile" button for runtime profile creation
-- 5 URL input fields
-- Human-Like Launch toggle with configurable delay range
-- Launch / Tile / Kill action buttons
-- Real-time progress bar and log console
+| Feature | Free Trial | Licensed |
+|---------|-----------|----------|
+| Profile 1-3 | ✅ | ✅ |
+| Profile 4+ | ❌ Locked | ✅ |
+| Proxy per profile | ❌ | ✅ |
+| Custom User-Agent | ❌ | ✅ |
+| Mute Audio | ❌ | ✅ |
+| Extension Loading | ❌ | ✅ |
+| Dynamic Add Profile | ❌ | ✅ |
+| Tag profiles | ✅ | ✅ |
+| Human-Like Delay | ✅ | ✅ |
+| Window Tiling | ✅ | ✅ |
+| Force Close | ✅ | ✅ |
 
 ## 🚀 Quick Start
 
@@ -44,7 +41,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-On first run the app auto-installs `customtkinter` and `requests` if missing.
+Auto-installs `customtkinter` and `requests` on first run.
 
 ## 📁 Project Structure
 
@@ -54,40 +51,32 @@ ChromeMultiBot/
 ├── requirements.txt                            # Dependencies
 ├── chrome_profile_launcher/
 │   ├── __init__.py
-│   ├── app.py                                  # Login UI + Main Dashboard
-│   ├── config.py                               # Config persistence (JSON)
+│   ├── app.py                                  # Dashboard + License Dialog
+│   ├── config.py                               # Config persistence
 │   ├── keyauth.py                              # KeyAuth API wrapper
-│   └── launcher.py                             # Chrome launch + proxy ext + tiling
+│   └── launcher.py                             # Chrome launch + tiling
 └── README.md
 ```
 
 ## 🔧 How It Works
 
-### Profile Launch Logic
-- **Profile 1** uses Chrome profile directory `Default`
-- **Profile 2+** use `Profile 1`, `Profile 2`, etc.
-- Each profile stores cookies/sessions in `~/.chromemultibot/chrome_data/`
+### Profile Launch
+- **Profile 1** → Chrome `Default` directory
+- **Profile 2+** → `Profile 1`, `Profile 2`, etc.
+- Sessions persist in `~/.chromemultibot/chrome_data/`
 
-### Proxy Authentication
-When a proxy with username/password is configured, the app generates a temporary Chrome extension with `chrome.webRequest.onAuthRequired` listener that auto-fills credentials.
+### Proxy Auth
+Generates a temporary Chrome extension with `webRequest.onAuthRequired` to auto-fill credentials.
 
-### User-Agent Spoofing
-Custom User-Agents are injected via the `--user-agent` Chrome flag.
-
-## 🔐 License System
-
-This application uses **KeyAuth** for license validation:
-- **Application Name:** ChromeMultiBot
-- **Version:** 1.0
-
-Contact **ImranDev3** to obtain a valid license key.
+### License Validation
+Uses **KeyAuth** API. On first launch, 3 profiles are free. Click the License button to activate.
 
 ## 📋 Requirements
 
 - Windows OS
 - Google Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`
 - Python 3.7+
-- Internet connection (for KeyAuth validation)
+- Internet connection (KeyAuth validation)
 
 ---
 

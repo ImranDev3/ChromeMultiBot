@@ -13,17 +13,12 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
     import requests
 
-from chrome_profile_launcher.app import LoginWindow, Dashboard
+from chrome_profile_launcher.app import Dashboard
 
 
 def main():
-    login = LoginWindow()
-    result = login.run()
-    if result:
-        app = Dashboard()
-        app.mainloop()
-    else:
-        sys.exit(0)
+    app = Dashboard()
+    app.mainloop()
 
 
 if __name__ == "__main__":

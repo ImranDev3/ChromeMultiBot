@@ -7,8 +7,11 @@ from typing import List
 CONFIG_DIR = Path.home() / ".chromemultibot"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 LICENSE_FILE = CONFIG_DIR / "license.dat"
+LICENSE_META = CONFIG_DIR / "license_meta.json"
 CHROME_DATA_DIR = CONFIG_DIR / "chrome_data"
 EXTENSIONS_DIR = CONFIG_DIR / "extensions"
+
+TRIAL_MAX_PROFILES = 3
 
 
 def _obfuscate(text: str) -> str:
@@ -36,6 +39,25 @@ def load_license_key() -> str:
 def clear_license_key():
     if LICENSE_FILE.exists():
         LICENSE_FILE.unlink()
+
+
+def save_license_meta(activated: bool, owner: str = ""):
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    LICENSE_META.write_text(json.dumps({"activated": activated, "owner": owner}), encoding="utf-8")
+
+
+def load_license_meta() -> dict:
+    if LICENSE_META.exists():
+        try:
+            return json.loads(LICENSE_META.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"activated": False, "owner": ""}
+
+
+def clear_license_meta():
+    if LICENSE_META.exists():
+        LICENSE_META.unlink()
 
 
 @dataclass
