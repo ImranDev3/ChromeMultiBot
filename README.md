@@ -63,6 +63,26 @@ ChromeMultiBot/
 - Google Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`
 - Python 3.7+
 
+## 🔑 For Developers — Generating New License Keys
+
+Use the included `keygen.py` (excluded from git):
+
+```bash
+python keygen.py "Customer Name"
+```
+
+Output:
+```
+Customer : Rahim
+Key      : CHROME-7650-FEA5-4A4B
+MD5 Hash : ad53b12348272baeebbe02e6c27f214c
+```
+
+1. Copy the MD5 hash
+2. Add it to the `_VALID_HASHES` list in `chrome_profile_launcher/license.py`
+3. Rebuild/distribute the app
+4. Send the plain key to the customer
+
 ---
 
 **Developed by [ImranDev3](https://github.com/ImranDev3)**
