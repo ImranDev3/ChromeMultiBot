@@ -1,24 +1,22 @@
-import subprocess
-import sys
+import subprocess, sys
 
-try:
-    import customtkinter
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter"])
-    import customtkinter
+for pkg in ["customtkinter"]:
+    try:
+        __import__(pkg.replace("-", "_"))
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
-try:
-    import requests
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
-    import requests
-
-from chrome_profile_launcher.app import Dashboard
+from chrome_profile_launcher.app import ActivationWindow, Dashboard
 
 
 def main():
-    app = Dashboard()
-    app.mainloop()
+    win = ActivationWindow()
+    ok = win.run()
+    if ok:
+        app = Dashboard(licensed=True)
+        app.mainloop()
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":

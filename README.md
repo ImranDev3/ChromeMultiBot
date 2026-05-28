@@ -1,38 +1,32 @@
 # Chrome Commander Pro 🚀
 
-Professional-grade Chrome multi-profile automation tool with KeyAuth licensing, proxy integration, anti-bot delays, and window management.
+Professional Chrome multi-profile automation tool with **offline MD5-hash license validation** — no internet required.
 
 ## ✨ Features
 
-- **12+ Dynamic Profiles** — Checkbox UI with unlimited dynamic profile addition
-- **Free Trial** — Use 3 profiles immediately, no license key required
-- **KeyAuth Licensing** — Unlock all 12 profiles + advanced features
-- **Persistent Sessions** — Each profile uses its own `--user-data-dir` for auto-login
-- **Per-Profile Proxy** — IP:Port:User:Pass with auto-auth Chrome extension
-- **Custom User-Agent** — Assign unique User-Agent per profile
-- **Mute Audio** — Per-profile `--mute-audio` toggle
-- **Extension Loading** — `--load-extension` per profile
+- **Offline License System** — MD5 hash-based key verification, no API calls
+- **12+ Dynamic Profiles** — Checkbox UI with runtime profile addition
+- **5 URL Inputs** — Pre-filled defaults, open all as tabs per profile
+- **Per-Profile Proxy** — Assign `IP:Port` to any profile
+- **Custom Tags** — Color-coded tags (Trading, Social, Work...)
 - **Anti-Bot Delay** — Random 2-5s delays between profile launches
+- **Mute Audio** — Global `--mute-audio` toggle
 - **Window Tiling** — Auto-arrange Chrome windows in a grid
-- **Profile Search & Tags** — Filter by name or color-coded tags
-- **Live Log Console** — Real-time launch log with timestamps
 - **Force Kill** — One-click `taskkill /F /IM chrome.exe`
+- **Persistent Sessions** — Each profile uses its own `--user-data-dir`
 
-## 🆓 Free vs Licensed
+## 🔐 License System (Offline)
 
-| Feature | Free Trial | Licensed |
-|---------|-----------|----------|
-| Profile 1-3 | ✅ | ✅ |
-| Profile 4+ | ❌ Locked | ✅ |
-| Proxy per profile | ❌ | ✅ |
-| Custom User-Agent | ❌ | ✅ |
-| Mute Audio | ❌ | ✅ |
-| Extension Loading | ❌ | ✅ |
-| Dynamic Add Profile | ❌ | ✅ |
-| Tag profiles | ✅ | ✅ |
-| Human-Like Delay | ✅ | ✅ |
-| Window Tiling | ✅ | ✅ |
-| Force Close | ✅ | ✅ |
+No internet connection required. Keys are verified locally using MD5 hashes.
+
+| Key | Status |
+|-----|--------|
+| `CHROME-PRO-ALPHA` | ✅ Full unlock |
+| `CHROME-PRO-BETA` | ✅ Full unlock |
+| `CHROME-PRO-GAMMA` | ✅ Full unlock |
+
+Without a key: 3 profiles available (trial mode).  
+With a valid key: all 12+ profiles + proxy support unlocked.
 
 ## 🚀 Quick Start
 
@@ -41,42 +35,33 @@ pip install -r requirements.txt
 python run.py
 ```
 
-Auto-installs `customtkinter` and `requests` on first run.
-
-## 📁 Project Structure
+## 📁 Structure
 
 ```
 ChromeMultiBot/
-├── run.py                                      # Entry point
-├── requirements.txt                            # Dependencies
+├── run.py                        # Entry point
+├── requirements.txt
 ├── chrome_profile_launcher/
 │   ├── __init__.py
-│   ├── app.py                                  # Dashboard + License Dialog
-│   ├── config.py                               # Config persistence
-│   ├── keyauth.py                              # KeyAuth API wrapper
-│   └── launcher.py                             # Chrome launch + tiling
+│   ├── app.py                    # Activation window + Dashboard
+│   ├── launcher.py               # Chrome launch + tiling + kill
+│   └── license.py                # Offline MD5 hash verification
 └── README.md
 ```
 
 ## 🔧 How It Works
 
-### Profile Launch
-- **Profile 1** → Chrome `Default` directory
+- **Profile 1** → Chrome's `Default` directory
 - **Profile 2+** → `Profile 1`, `Profile 2`, etc.
-- Sessions persist in `~/.chromemultibot/chrome_data/`
-
-### Proxy Auth
-Generates a temporary Chrome extension with `webRequest.onAuthRequired` to auto-fill credentials.
-
-### License Validation
-Uses **KeyAuth** API. On first launch, 3 profiles are free. Click the License button to activate.
+- Sessions stored in `~/.chromemultibot/chrome_data/`
+- License stored in `~/.chromemultibot/license_config.json`
+- Saved key is auto-verified on next launch
 
 ## 📋 Requirements
 
 - Windows OS
 - Google Chrome at `C:\Program Files\Google\Chrome\Application\chrome.exe`
 - Python 3.7+
-- Internet connection (KeyAuth validation)
 
 ---
 
